@@ -11,10 +11,10 @@ import HistoryEntry from "./components/HistoryEntry";
 const SUGGESTED_QUERIES = [
   "Was Einstein really bad at math in school?",
   "Is the Great Wall of China visible from space?",
-  "Did Napoleon Bonaparte have a short stature?",
+  "Did Napoleon have an unusually short stature?",
   "Was the Eiffel Tower supposed to be permanent?",
-  "Can you survive a fall from any height into water?",
   "Do humans only use 10% of their brain?",
+  "Can you survive any fall into water?",
 ];
 
 export default function App() {
@@ -39,62 +39,82 @@ export default function App() {
   const showHero = !data && !loading && !error && history.length === 0;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Sticky header */}
-      <header className="border-b border-ats-border/50 bg-ats-surface/80 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            {/* Logo mark */}
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-ats-mint to-ats-blue
-                            flex items-center justify-center shadow-glow-mint">
-              <span className="text-ats-bg font-head font-bold text-xs">AT</span>
+    <div className="min-h-screen flex flex-col bg-[#080E16]">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-[#182030]/60 bg-[#080E16]/90 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="relative w-7 h-7">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#01C4A0] to-[#4BA8E8] opacity-90" />
+              <div className="absolute inset-0 rounded-xl flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" stroke="#050B12" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M8 6L10 7.5V10L8 11.5L6 10V7.5L8 6Z" fill="#050B12"/>
+                </svg>
+              </div>
             </div>
-            <span className="font-head text-sm font-bold text-white tracking-tight">
-              Trust Sentinel
-            </span>
+            <div className="flex flex-col leading-none">
+              <span className="font-head text-[13px] font-bold text-white tracking-tight">Trust Sentinel</span>
+              <span className="text-[10px] text-[#3D5670] font-mono tracking-wide">AI Fact Verifier</span>
+            </div>
           </div>
 
+          {/* Status */}
           <div className="flex items-center gap-2">
-            <span className="hidden sm:block text-[11px] text-ats-dim">
-              The trust layer AI never gave you.
-            </span>
-            <span className="sm:hidden font-mono text-[10px] text-ats-dim">
-              Trust · Verify · Source
-            </span>
-            <div className="w-1.5 h-1.5 rounded-full bg-ats-mint animate-pulse-dot ml-2 sm:ml-2" />
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#182030] bg-[#0D1520]">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#01C4A0]"
+                style={{ animation: "pulseGlow 2.5s ease-in-out infinite", boxShadow: "0 0 6px rgba(1,196,160,0.6)" }} />
+              <span className="text-[11px] font-mono text-[#3D5670]">live</span>
+            </div>
+            {(data || history.length > 0) && (
+              <button onClick={() => { reset(); setHistory([]); }}
+                className="btn-ghost text-[11px] rounded-full px-3 py-1">
+                Clear
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main content area */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 space-y-4 sm:space-y-5 flex flex-col items-center">
-        <div className="w-full max-w-3xl space-y-5">
-          {/* Hero / Landing state */}
+      {/* Main */}
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col">
+        <div className="w-full space-y-4 flex-1">
+
+          {/* Hero */}
           {showHero && (
-            <div className="flex flex-col items-center justify-center py-10 sm:py-24 animate-fade-up">
-              {/* Logo mark large */}
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-ats-mint to-ats-blue
-                              flex items-center justify-center mb-6 sm:mb-8 shadow-glow-mint hover:animate-glow transition-all">
-                <span className="text-ats-bg font-head font-bold text-xl">AT</span>
+            <div className="flex flex-col items-center justify-center py-16 sm:py-24"
+              style={{ animation: "fadeUp 0.5s ease both" }}>
+
+              {/* Icon */}
+              <div className="relative mb-8">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#01C4A0]/20 to-[#4BA8E8]/10 blur-xl scale-150" />
+                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#01C4A0] to-[#4BA8E8] flex items-center justify-center shadow-lg">
+                  <svg width="28" height="28" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 2L14 5.5V10.5L8 14L2 10.5V5.5L8 2Z" stroke="#050B12" strokeWidth="1.5" strokeLinejoin="round"/>
+                    <path d="M8 6L10 7.5V10L8 11.5L6 10V7.5L8 6Z" fill="#050B12"/>
+                  </svg>
+                </div>
               </div>
 
-              <h1 className="font-head text-3xl sm:text-4xl font-bold text-center leading-tight mb-3">
+              <h1 className="font-head text-[28px] sm:text-4xl font-bold text-center leading-[1.15] mb-3 tracking-tight">
                 <span className="text-white">Ask anything.</span>
                 <br />
-                <span className="text-gradient-mint">Know what to trust.</span>
+                <span className="text-gradient-teal">Know what to trust.</span>
               </h1>
 
-              <p className="text-ats-muted text-xs sm:text-sm text-center max-w-sm leading-relaxed mb-8 font-mono">
-                Dual-LLM cross-verification · Real-time fact-checking · Sentence-level trust scoring
+              <p className="text-[#3D5670] text-[13px] text-center max-w-sm leading-relaxed mb-10 font-mono">
+                Dual-LLM · Web fact-check · Sentence-level trust · 0–100 score
               </p>
 
-              {/* Suggested queries */}
+              {/* Chips */}
               <div className="flex flex-wrap justify-center gap-2 max-w-lg">
                 {SUGGESTED_QUERIES.map((q, i) => (
                   <button key={i} onClick={() => handleSubmit(q)}
-                    className="text-[11px] sm:text-xs px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border border-ats-border
-                               text-ats-muted hover:text-ats-mint hover:border-ats-mint/40
-                               transition-all duration-200 hover:bg-ats-mint/5 active:scale-95 text-left sm:text-center">
+                    className="text-[12px] px-3.5 py-1.5 rounded-full border border-[#1A2840]
+                               text-[#4A6880] hover:text-[#01C4A0] hover:border-[#01C4A0]/30
+                               hover:bg-[#01C4A0]/5 transition-all duration-200 active:scale-95"
+                  >
                     {q}
                   </button>
                 ))}
@@ -109,11 +129,11 @@ export default function App() {
 
           {/* History */}
           {history.length > 1 && (
-            <div className="space-y-3 sm:space-y-4 pt-2">
+            <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-ats-border/50" />
-                <span className="text-[10px] sm:text-[11px] font-mono text-ats-dim uppercase tracking-wider">Previous queries</span>
-                <div className="flex-1 h-px bg-ats-border/50" />
+                <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, #182030, transparent)" }} />
+                <span className="text-[10px] font-mono text-[#2E4560] uppercase tracking-widest">Previous</span>
+                <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, #182030, transparent)" }} />
               </div>
               {history.slice(1).map((item, i) => (
                 <HistoryEntry key={i} query={item.query} data={item.data} />
@@ -124,9 +144,12 @@ export default function App() {
       </main>
 
       {/* Sticky input */}
-      <div className="sticky bottom-0 bg-ats-bg/90 sm:bg-gradient-to-t from-ats-bg via-ats-bg to-transparent backdrop-blur-md sm:backdrop-blur-none border-t border-ats-border sm:border-t-0 p-3 pb-safe sm:p-0 sm:pt-6 sm:pb-5 z-20 w-full">
-        <div className="max-w-3xl mx-auto px-1 sm:px-5">
-          <ChatInput ref={inputRef} onSubmit={handleSubmit} loading={loading} />
+      <div className="sticky bottom-0 z-20 w-full">
+        <div className="h-8 bg-gradient-to-t from-[#080E16] to-transparent pointer-events-none" />
+        <div className="bg-[#080E16] pb-4 px-4 sm:px-0">
+          <div className="max-w-3xl mx-auto sm:px-6">
+            <ChatInput ref={inputRef} onSubmit={handleSubmit} loading={loading} />
+          </div>
         </div>
       </div>
     </div>

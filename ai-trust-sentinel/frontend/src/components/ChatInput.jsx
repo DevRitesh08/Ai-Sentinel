@@ -1,30 +1,20 @@
 // frontend/src/components/ChatInput.jsx
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 
-/**
- * Query input — large, centered, haloed textarea.
- * Auto-resizing, Enter to submit, Shift+Enter for newline.
- * Supports forwardRef for keyboard shortcut focus.
- */
 const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, disabled = false }, ref) {
   const [query, setQuery] = useState("");
   const textareaRef = useRef(null);
   const isDisabled = loading || disabled;
 
-  // Expose focus to parent via ref
-  useImperativeHandle(ref, () => ({
-    focus: () => textareaRef.current?.focus(),
-  }));
+  useImperativeHandle(ref, () => ({ focus: () => textareaRef.current?.focus() }));
 
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
+  useEffect(() => { textareaRef.current?.focus(); }, []);
 
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 180) + "px";
+    el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }, [query]);
 
   const handleSubmit = () => {
@@ -36,56 +26,75 @@ const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, dis
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
   };
 
+  const hasText = query.trim().length > 0;
+
   return (
-    <div className="card p-3 sm:p-4 shadow-lg shadow-black/20">
-      <textarea
-        ref={textareaRef}
-        id="query-input"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask anything — I'll tell you what to trust."
-        disabled={isDisabled}
-        rows={1}
-        className={[
-          "w-full bg-transparent text-ats-text text-[15px]",
-          "placeholder:text-ats-dim resize-none outline-none",
-          "leading-relaxed min-h-[44px] font-sans",
-          isDisabled && "opacity-40 cursor-not-allowed",
-        ].filter(Boolean).join(" ")}
-      />
+    <div className="relative rounded-2xl border transition-all duration-200"
+      style={{
+        background: "#0D1520",
+        borderColor: hasText && !isDisabled ? "rgba(1,196,160,0.25)" : "#182030",
+        boxShadow: hasText && !isDisabled
+          ? "0 0 0 1px rgba(1,196,160,0.1), 0 8px 32px rgba(0,0,0,0.4)"
+          : "0 4px 24px rgba(0,0,0,0.3)",
+      }}
+    >
+      <div className="flex items-end gap-3 px-4 py-3.5">
+        <textarea
+          ref={textareaRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask anything — I'll tell you what to trust…"
+          disabled={isDisabled}
+          rows={1}
+          className="flex-1 bg-transparent text-[#C8D8E8] text-[14px] leading-relaxed
+                     placeholder:text-[#2E4560] resize-none outline-none font-sans min-h-[26px]
+                     disabled:opacity-40 disabled:cursor-not-allowed"
+        />
 
-      <div className="flex items-center justify-between mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-ats-border/50">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[10px] sm:text-[11px] text-ats-dim">
-            ↵ Send · ⇧↵ New line · / Focus
-          </span>
-          {loading && (
-            <span className="text-[11px] text-ats-mint font-mono animate-pulse">
-              ● Verifying...
-            </span>
-          )}
-        </div>
-
+        {/* Submit button */}
         <button
-          id="submit-button"
           onClick={handleSubmit}
-          disabled={!query.trim() || isDisabled}
-          className={[
-            "px-4 sm:px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200",
-            query.trim() && !isDisabled
-              ? "bg-ats-mint text-ats-bg hover:shadow-glow-mint active:scale-[0.97] cursor-pointer"
-              : "bg-ats-border text-ats-dim cursor-not-allowed opacity-40",
-          ].filter(Boolean).join(" ")}
+          disabled={!hasText || isDisabled}
+          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center
+                     transition-all duration-200"
+          style={{
+            background: hasText && !isDisabled
+              ? "linear-gradient(135deg, #01C4A0, #00A882)"
+              : "#182030",
+            opacity: hasText && !isDisabled ? 1 : 0.4,
+            boxShadow: hasText && !isDisabled ? "0 0 12px rgba(1,196,160,0.3)" : "none",
+            transform: "none",
+            cursor: hasText && !isDisabled ? "pointer" : "not-allowed",
+          }}
         >
-          {loading ? "Verifying..." : "Verify →"}
+          {loading ? (
+            <svg className="w-3.5 h-3.5 text-[#050B12] animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke={hasText ? "#050B12" : "#3D5670"} strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+          )}
         </button>
+      </div>
+
+      {/* Footer hint */}
+      <div className="flex items-center justify-between px-4 pb-2.5">
+        <span className="text-[10.5px] font-mono text-[#2A3E52]">
+          {loading ? (
+            <span className="text-[#01C4A0]/70 animate-pulse">Verifying…</span>
+          ) : (
+            "↵ send  ·  ⇧↵ newline  ·  / focus"
+          )}
+        </span>
+        <span className="text-[10px] font-mono text-[#1E3048]">
+          {query.length > 0 ? `${query.length} / 2000` : ""}
+        </span>
       </div>
     </div>
   );

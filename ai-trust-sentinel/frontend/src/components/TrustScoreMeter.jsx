@@ -2,69 +2,60 @@
 import { useEffect, useState } from "react";
 import { getTrustConfig } from "../utils/trustHelpers";
 
-/**
- * Trust Score ribbon / card — designed as a compact trust-forward widget.
- * Shows animated score, color-coded ring, label, and tagline.
- */
 export default function TrustScoreMeter({ score, size = 120, animated = true }) {
-  const [displayScore, setDisplayScore] = useState(animated ? 0 : score);
+  const [display, setDisplay] = useState(animated ? 0 : score);
   const config = getTrustConfig(score);
 
   useEffect(() => {
-    if (!animated) { setDisplayScore(score); return; }
-
-    let current = 0;
-    const target = score;
-    const steps = 50;
-    const increment = target / steps;
-    const interval = 700 / steps;
-
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        setDisplayScore(target);
-        clearInterval(timer);
-      } else {
-        setDisplayScore(Math.floor(current));
-      }
-    }, interval);
-
-    return () => clearInterval(timer);
+    if (!animated) { setDisplay(score); return; }
+    let cur = 0;
+    const steps = 40;
+    const inc = score / steps;
+    const id = setInterval(() => {
+      cur += inc;
+      if (cur >= score) { setDisplay(score); clearInterval(id); }
+      else setDisplay(Math.floor(cur));
+    }, 600 / steps);
+    return () => clearInterval(id);
   }, [score, animated]);
 
-  const radius = (size / 2) - 10;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDash = (displayScore / 100) * circumference;
-  const center = size / 2;
+  const r = (size / 2) - 8;
+  const circ = 2 * Math.PI * r;
+  const dash = (display / 100) * circ;
+  const c = size / 2;
 
   return (
-    <div className="flex flex-col items-center gap-2 animate-score-in" title={`Trust Score (0–100): ${config.tagline}`}>
+    <div className="flex flex-col items-center gap-1"
+      style={{ animation: "scoreIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both" }}>
       <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-          {/* Background ring */}
-          <circle cx={center} cy={center} r={radius} fill="none"
-            stroke="#1E2A3A" strokeWidth="6" />
-          {/* Score arc */}
-          <circle cx={center} cy={center} r={radius} fill="none"
-            stroke={config.color} strokeWidth="6" strokeLinecap="round"
-            strokeDasharray={`${strokeDash} ${circumference}`}
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+          className="-rotate-90" style={{ overflow: "visible" }}>
+          {/* Track */}
+          <circle cx={c} cy={c} r={r} fill="none"
+            stroke="#141F2D" strokeWidth="5" />
+          {/* Arc */}
+          <circle cx={c} cy={c} r={r} fill="none"
+            stroke={config.color} strokeWidth="5" strokeLinecap="round"
+            strokeDasharray={`${dash} ${circ}`}
             style={{
-              transition: "stroke-dasharray 0.08s linear",
-              filter: `drop-shadow(0 0 6px ${config.color}50)`,
+              transition: "stroke-dasharray 0.06s linear",
+              filter: `drop-shadow(0 0 5px ${config.color}50)`,
             }}
           />
         </svg>
-        {/* Center label */}
+        {/* Center */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-head font-bold leading-none"
-            style={{ fontSize: size * 0.32, color: config.color, textShadow: `0 0 16px ${config.color}30` }}>
-            {displayScore}
+          <span className="font-head font-bold leading-none tabular-nums"
+            style={{ fontSize: size * 0.31, color: config.color }}>
+            {display}
           </span>
-          <span className="text-ats-dim font-mono" style={{ fontSize: size * 0.085 }}>/100</span>
+          <span className="font-mono" style={{ fontSize: size * 0.14, color: "#2E4560" }}>
+            /100
+          </span>
         </div>
       </div>
-      {/* Trust label */}
-      <span className={`font-mono text-[10px] font-semibold tracking-widest uppercase ${config.textClass}`}>
+      <span className="font-mono font-semibold tracking-widest uppercase"
+        style={{ fontSize: size * 0.115, color: config.color, opacity: 0.85 }}>
         {config.label}
       </span>
     </div>

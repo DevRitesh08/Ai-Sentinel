@@ -1,84 +1,66 @@
 // frontend/src/utils/trustHelpers.js
 
-/**
- * Trust score configuration — new redesign palette.
- */
 export function getTrustConfig(score) {
   if (score >= 85) return {
     label:     "High Confidence",
-    color:     "#01E6A8",
-    bgClass:   "bg-emerald-950/40",
-    textClass: "text-ats-mint",
-    emoji:     "✓",
+    color:     "#01C4A0",
+    textClass: "text-[#01C4A0]",
     tagline:   "Supported by external sources",
   };
   if (score >= 65) return {
     label:     "Moderate Confidence",
-    color:     "#F5C156",
-    bgClass:   "bg-yellow-950/30",
-    textClass: "text-ats-caution",
-    emoji:     "~",
+    color:     "#F0B43C",
+    textClass: "text-[#F0B43C]",
     tagline:   "Partially supported — review sources",
   };
   if (score >= 45) return {
     label:     "Low Confidence",
-    color:     "#FF9A3C",
-    bgClass:   "bg-orange-950/30",
-    textClass: "text-orange-400",
-    emoji:     "!",
+    color:     "#E87830",
+    textClass: "text-[#E87830]",
     tagline:   "Limited evidence — verify manually",
   };
   return {
     label:     "Unreliable",
-    color:     "#FF6B6B",
-    bgClass:   "bg-red-950/30",
-    textClass: "text-ats-danger",
-    emoji:     "✗",
+    color:     "#F5505A",
+    textClass: "text-[#F5505A]",
     tagline:   "Contradicted by credible sources",
   };
 }
 
-/**
- * Sentence / claim status configuration — redesign palette.
- */
 export function getStatusConfig(status) {
   switch (status?.toUpperCase()) {
     case "VERIFIED":
       return {
-        highlightBg:   "bg-emerald-950/30",
-        underlineColor: "#01E6A8",
+        underlineColor: "#01C4A0",
         badgeClass:    "badge-verified",
-        dotColor:      "#01E6A8",
+        dotColor:      "#01C4A0",
         label:         "Verified",
-        tooltip:       "Verified — supported by external sources",
+        tooltip:       "Supported by external sources",
         icon:          "✓",
       };
     case "UNCERTAIN":
       return {
-        highlightBg:   "bg-yellow-950/25",
-        underlineColor: "#F5C156",
+        underlineColor: "#F0B43C",
         badgeClass:    "badge-uncertain",
-        dotColor:      "#F5C156",
+        dotColor:      "#F0B43C",
         label:         "Uncertain",
-        tooltip:       "Uncertain — no confirming web sources found",
+        tooltip:       "No confirming sources found",
         icon:          "?",
       };
     case "CONTRADICTED":
       return {
-        highlightBg:   "bg-red-950/30",
-        underlineColor: "#FF6B6B",
+        underlineColor: "#F5505A",
         badgeClass:    "badge-contradicted",
-        dotColor:      "#FF6B6B",
+        dotColor:      "#F5505A",
         label:         "Contradicted",
         tooltip:       "Contradicted by credible sources",
         icon:          "✗",
       };
     default:
       return {
-        highlightBg:   "",
         underlineColor: "transparent",
         badgeClass:    "badge-neutral",
-        dotColor:      "#64748B",
+        dotColor:      "#3D5670",
         label:         "Unverified",
         tooltip:       "No matching claim extracted",
         icon:          "–",
@@ -86,9 +68,6 @@ export function getStatusConfig(status) {
   }
 }
 
-/**
- * Formats latency in ms to human-readable.
- */
 export function formatLatency(ms) {
   if (!ms) return null;
   if (ms < 100)  return "instant";
@@ -96,13 +75,10 @@ export function formatLatency(ms) {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
-/**
- * Format a cache timestamp.
- */
 export function formatCacheAge(ms) {
   if (!ms) return "just now";
   const mins = Math.floor(ms / 60000);
-  if (mins < 1) return "just now";
+  if (mins < 1)  return "just now";
   if (mins < 60) return `${mins}m ago`;
   return `${Math.floor(mins / 60)}h ago`;
 }

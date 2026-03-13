@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-ats-bg text-ats-text font-sans;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(1,230,168,0.06), transparent),
+      radial-gradient(circle at 20% 80%, rgba(14,165,255,0.04), transparent);
+  }
+
+  * {
+    @apply box-border;
+    scrollbar-width: thin;
+    scrollbar-color: #1E2A3A transparent;
+  }
+
+  ::selection {
+    background: rgba(1,230,168,0.2);
+    color: #fff;
+  }
+}
+
+@layer components {
+  /* Card system */
+  .card {
+    @apply bg-ats-surface border border-ats-border rounded-2xl;
+  }
+  .card-elevated {
+    @apply bg-ats-elevated border border-ats-border rounded-2xl shadow-lg;
+  }
+
+  /* Trust badges with new palette */
+  .badge {
+    @apply inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full;
+  }
+  .badge-verified {
+    @apply badge;
+    background: rgba(1,230,168,0.12);
+    color: #01E6A8;
+    border: 1px solid rgba(1,230,168,0.25);
+  }
+  .badge-uncertain {
+    @apply badge;
+    background: rgba(245,193,86,0.12);
+    color: #F5C156;
+    border: 1px solid rgba(245,193,86,0.25);
+  }
+  .badge-contradicted {
+    @apply badge;
+    background: rgba(255,107,107,0.12);
+    color: #FF6B6B;
+    border: 1px solid rgba(255,107,107,0.25);
+  }
+  .badge-neutral {
+    @apply badge;
+    background: rgba(100,116,139,0.12);
+    color: #94A3B8;
+    border: 1px solid rgba(100,116,139,0.2);
+  }
+  .badge-info {
+    @apply badge;
+    background: rgba(14,165,255,0.12);
+    color: #0EA5FF;
+    border: 1px solid rgba(14,165,255,0.25);
+  }
+
+  /* Interactive button base */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-xl
+           transition-all duration-200 ease-out cursor-pointer
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn px-5 py-2.5 bg-ats-mint text-ats-bg text-sm font-semibold
+           hover:shadow-glow-mint active:scale-[0.97];
+  }
+  .btn-ghost {
+    @apply btn px-3 py-2 text-ats-muted text-sm
+           hover:text-ats-text hover:bg-ats-hover;
+  }
+
+  /* Overlay / backdrop */
+  .overlay {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-40;
+  }
+
+  /* Drawer */
+  .drawer {
+    @apply fixed top-0 right-0 h-full bg-ats-surface border-l border-ats-border
+           shadow-2xl z-50 overflow-y-auto;
+  }
+}
+
+@layer utilities {
+  .text-gradient-mint {
+    background: linear-gradient(135deg, #01E6A8, #0EA5FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

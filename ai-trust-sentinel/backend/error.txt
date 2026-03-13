@@ -1,0 +1,68 @@
+Traceback (most recent call last):
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\api_core\grpc_helpers_async.py", line 86, in __await__
+    response = yield from self._call.__await__()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\grpc\aio\_interceptor.py", line 474, in __await__
+    response = yield from call.__await__()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\grpc\aio\_call.py", line 327, in __await__
+    raise _create_rpc_error(
+    ...<2 lines>...
+    )
+grpc.aio._call.AioRpcError: <AioRpcError of RPC that terminated with:
+	status = StatusCode.NOT_FOUND
+	details = "models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
+	debug_error_string = "UNKNOWN:Error received from peer ipv6:%5B2001:4860:4802:34::223%5D:443 {grpc_status:5, grpc_message:"models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\services\llm_primary.py", line 48, in call_primary
+    response = await model.generate_content_async(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\generativeai\generative_models.py", line 385, in generate_content_async
+    response = await self._async_client.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\ai\generativelanguage_v1beta\services\generative_service\async_client.py", line 440, in generate_content
+    response = await rpc(
+               ^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py", line 231, in retry_wrapped_func
+    return await retry_target(
+           ^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py", line 163, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\api_core\retry\retry_base.py", line 216, in _retry_error_helper
+    raise final_exc from source_exc
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py", line 158, in retry_target
+    return await target()
+           ^^^^^^^^^^^^^^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\venv\Lib\site-packages\google\api_core\grpc_helpers_async.py", line 89, in __await__
+    raise exceptions.from_grpc_error(rpc_error) from rpc_error
+google.api_core.exceptions.NotFound: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\test_gemini2.py", line 14, in test
+    res = await call_primary("test query")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Vibe\Ai Sentinel\ai-trust-sentinel\backend\services\llm_primary.py", line 75, in call_primary
+    raise RuntimeError(f"Primary LLM failed: {str(e)}")
+RuntimeError: Primary LLM failed: 404 models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.

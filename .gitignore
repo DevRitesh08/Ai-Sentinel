@@ -1,0 +1,44 @@
+# Environment
+.env
+.env.*
+!.env.example
+!.env.template
+!**/.env.example
+!**/.env.template
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Node
+node_modules/
+.next/
+out/
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

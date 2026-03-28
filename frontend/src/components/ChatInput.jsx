@@ -1,20 +1,32 @@
-// frontend/src/components/ChatInput.jsx
-import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
-const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, disabled = false }, ref) {
+const ChatInput = forwardRef(function ChatInput(
+  {
+    onSubmit,
+    loading = false,
+    disabled = false,
+    useContext = true,
+    contextTurns = 0,
+    onToggleContext,
+    onClearContext,
+  },
+  ref
+) {
   const [query, setQuery] = useState("");
   const textareaRef = useRef(null);
   const isDisabled = loading || disabled;
 
   useImperativeHandle(ref, () => ({ focus: () => textareaRef.current?.focus() }));
 
-  useEffect(() => { textareaRef.current?.focus(); }, []);
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    const element = textareaRef.current;
+    if (!element) return;
+    element.style.height = "auto";
+    element.style.height = `${Math.min(element.scrollHeight, 200)}px`;
   }, [query]);
 
   const handleSubmit = () => {
@@ -22,17 +34,23 @@ const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, dis
     if (!trimmed || isDisabled) return;
     onSubmit(trimmed);
     setQuery("");
-    if (textareaRef.current) textareaRef.current.style.height = "auto";
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit();
+    }
   };
 
   const hasText = query.trim().length > 0;
 
   return (
-    <div className="relative rounded-2xl border transition-all duration-200"
+    <div
+      className="relative rounded-2xl border transition-all duration-200"
       style={{
         background: "#0D1520",
         borderColor: hasText && !isDisabled ? "rgba(1,196,160,0.25)" : "#182030",
@@ -45,9 +63,9 @@ const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, dis
         <textarea
           ref={textareaRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(event) => setQuery(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask anything — I'll tell you what to trust…"
+          placeholder="Ask anything - I will tell you what to trust..."
           disabled={isDisabled}
           rows={1}
           className="flex-1 bg-transparent text-[#C8D8E8] text-[14px] leading-relaxed
@@ -55,16 +73,13 @@ const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, dis
                      disabled:opacity-40 disabled:cursor-not-allowed"
         />
 
-        {/* Submit button */}
         <button
+          type="button"
           onClick={handleSubmit}
           disabled={!hasText || isDisabled}
-          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center
-                     transition-all duration-200"
+          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200"
           style={{
-            background: hasText && !isDisabled
-              ? "linear-gradient(135deg, #01C4A0, #00A882)"
-              : "#182030",
+            background: hasText && !isDisabled ? "linear-gradient(135deg, #01C4A0, #00A882)" : "#182030",
             opacity: hasText && !isDisabled ? 1 : 0.4,
             boxShadow: hasText && !isDisabled ? "0 0 12px rgba(1,196,160,0.3)" : "none",
             transform: "none",
@@ -83,18 +98,45 @@ const ChatInput = forwardRef(function ChatInput({ onSubmit, loading = false, dis
         </button>
       </div>
 
-      {/* Footer hint */}
-      <div className="flex items-center justify-between px-4 pb-2.5">
-        <span className="text-[10.5px] font-mono text-[#2A3E52]">
-          {loading ? (
-            <span className="text-[#01C4A0]/70 animate-pulse">Verifying…</span>
-          ) : (
-            "↵ send  ·  ⇧↵ newline  ·  / focus"
+      <div className="flex items-center justify-between gap-3 px-4 pb-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => onToggleContext?.(!useContext)}
+            className="text-[10.5px] font-mono px-2 py-1 rounded-full border transition-colors"
+            style={{
+              color: useContext ? "#01C4A0" : "#3D5670",
+              borderColor: useContext ? "rgba(1,196,160,0.28)" : "#182030",
+              background: useContext ? "rgba(1,196,160,0.08)" : "#0B1119",
+            }}
+          >
+            Context {useContext ? "on" : "off"}
+          </button>
+          {useContext && contextTurns > 0 && (
+            <>
+              <span className="text-[10.5px] font-mono text-[#2A3E52]">
+                {contextTurns} turn{contextTurns !== 1 ? "s" : ""} queued
+              </span>
+              <button
+                type="button"
+                onClick={() => onClearContext?.()}
+                disabled={loading}
+                className="text-[10.5px] font-mono text-[#4A6880] hover:text-[#4BA8E8] transition-colors disabled:opacity-40"
+              >
+                Clear context
+              </button>
+            </>
           )}
-        </span>
-        <span className="text-[10px] font-mono text-[#1E3048]">
-          {query.length > 0 ? `${query.length} / 2000` : ""}
-        </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-[10.5px] font-mono text-[#2A3E52]">
+            {loading ? <span className="text-[#01C4A0]/70 animate-pulse">Verifying...</span> : "Enter send · Shift+Enter newline · / focus"}
+          </span>
+          <span className="text-[10px] font-mono text-[#1E3048]">
+            {query.length > 0 ? `${query.length} / 2000` : ""}
+          </span>
+        </div>
       </div>
     </div>
   );

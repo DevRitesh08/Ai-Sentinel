@@ -1,11 +1,10 @@
-// frontend/src/hooks/useVerify.js
 import { useState, useCallback, useRef } from "react";
 import { verifyQuery } from "../api/client";
 
 const INITIAL_STATE = {
-  data:      null,     // VerifyResponse or null
-  loading:   false,
-  error:     null,     // Error message string or null
+  data: null,
+  loading: false,
+  error: null,
   fromCache: false,
 };
 
@@ -13,8 +12,7 @@ export function useVerify() {
   const [state, setState] = useState(INITIAL_STATE);
   const abortRef = useRef(null);
 
-  const verify = useCallback(async (query) => {
-    // Cancel any in-flight request
+  const verify = useCallback(async (query, options = {}) => {
     if (abortRef.current) {
       abortRef.current.abort();
     }
@@ -22,22 +20,21 @@ export function useVerify() {
     setState({ data: null, loading: true, error: null, fromCache: false });
 
     try {
-      const result = await verifyQuery(query);
+      const result = await verifyQuery(query, options.history ?? []);
 
       setState({
-        data:      result,
-        loading:   false,
-        error:     null,
+        data: result,
+        loading: false,
+        error: null,
         fromCache: result.from_cache ?? false,
       });
 
       return result;
-
     } catch (err) {
       let errorMessage = "Something went wrong. Please try again.";
 
       if (err.isTimeout) {
-        errorMessage = "The request timed out. The pipeline may be busy — try again.";
+        errorMessage = "The request timed out. The pipeline may be busy - try again.";
       } else if (err.isNetwork) {
         errorMessage = "Cannot reach the server. Is the backend running on port 8000?";
       } else if (err.isClient) {
@@ -47,9 +44,9 @@ export function useVerify() {
       }
 
       setState({
-        data:      null,
-        loading:   false,
-        error:     errorMessage,
+        data: null,
+        loading: false,
+        error: errorMessage,
         fromCache: false,
       });
 
@@ -67,6 +64,6 @@ export function useVerify() {
     reset,
     hasResult: !!state.data && !state.loading,
     isLoading: state.loading,
-    hasError:  !!state.error && !state.loading,
+    hasError: !!state.error && !state.loading,
   };
 }

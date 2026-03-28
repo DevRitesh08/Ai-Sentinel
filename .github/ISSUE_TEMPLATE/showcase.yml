@@ -1,0 +1,36 @@
+name: Showcase or use case
+description: Share how you used AI Trust Sentinel, a cool demo, or a benchmark result.
+title: "[Showcase]: "
+labels:
+  - showcase
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These reports are gold. They help us understand what resonates, what should go in the README, and what to improve next.
+  - type: input
+    id: title
+    attributes:
+      label: Short title
+      placeholder: We used AI Trust Sentinel to validate our customer-support bot answers
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What did you build or test?
+      placeholder: We wired the API into our internal chatbot pipeline and checked answers before sending them to users.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: What results or insights did you get?
+      placeholder: Trust scores were most helpful on historical facts and weakest on sparse niche topics.
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Links, screenshots, or metrics
+      placeholder: Paste screenshots, a repo link, or benchmark numbers here.

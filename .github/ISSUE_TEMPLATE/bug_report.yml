@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a reproducible problem in the API, frontend, or verification pipeline.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve AI Trust Sentinel. Please make the report as reproducible as possible.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Backend API
+        - Frontend UI
+        - Verification pipeline
+        - Deployment
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: query
+    attributes:
+      label: Query or action that triggered the bug
+      placeholder: Was the Eiffel Tower meant to be temporary?
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: The request should return a verified response with claims and sources.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: The request timed out or the UI crashed after submit.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start the backend
+        2. Start the frontend
+        3. Submit the query
+        4. Observe the result
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Windows 11, Python 3.11, Node 20, Chrome 135
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, or response payload
+      render: shell

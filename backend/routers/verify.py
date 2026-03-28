@@ -1,100 +1,91 @@
-# backend/routers/verify.py
-import re
-import html
-import logging
-import json
-import time
 import asyncio
+import html
+import json
+import logging
+import re
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from models.schemas import VerifyRequest, VerifyResponse
-from services.pipeline import run_verification_pipeline
+
+from models.schemas import ConversationTurn, VerifyRequest, VerifyResponse
 from services.cache import get_cached, get_cache_stats
+from services.context_resolver import MAX_CONTEXT_TURNS, resolve_query
+from services.pipeline import run_verification_pipeline
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 def sanitize_query(query: str) -> str:
-    """
-    Sanitizes query input before processing.
-    - Strips leading/trailing whitespace
-    - Removes HTML tags (XSS prevention)
-    - Normalizes internal whitespace
-    - Truncates at MAX_LENGTH
-    """
-    MAX_LENGTH = 2000
-
-    # Strip whitespace
+    max_length = 2000
     query = query.strip()
-
-    # Remove HTML tags
-    query = re.sub(r'<[^>]+>', '', query)
-
-    # Decode HTML entities
+    query = re.sub(r"<[^>]+>", "", query)
     query = html.unescape(query)
-
-    # Normalize whitespace
-    query = re.sub(r'\s+', ' ', query)
-
-    # Truncate
-    if len(query) > MAX_LENGTH:
-        query = query[:MAX_LENGTH]
-
+    query = re.sub(r"\s+", " ", query)
+    if len(query) > max_length:
+        query = query[:max_length]
     return query
 
 
-@router.post("/verify", response_model=VerifyResponse)
-async def verify_query(payload: VerifyRequest):
-    """
-    Main verification endpoint with input sanitization.
-    """
-    query = sanitize_query(payload.query)
+def sanitize_history(history: list[ConversationTurn]) -> list[ConversationTurn]:
+    cleaned = []
+    for turn in history[-MAX_CONTEXT_TURNS:]:
+        content = sanitize_query(turn.content)
+        if len(content) < 2:
+            continue
+        cleaned.append(ConversationTurn(role=turn.role, content=content))
+    return cleaned
 
+
+def validate_meaningful_query(query: str) -> None:
     if len(query) < 2:
         raise HTTPException(status_code=400, detail="Query too short (minimum 2 characters)")
 
     if len(query) > 2000:
         raise HTTPException(status_code=400, detail="Query too long (maximum 2000 characters)")
 
-    # Check for purely non-semantic input
-    meaningful_chars = re.sub(r'[^a-zA-Z0-9\u3000-\u9fff\u4e00-\u9fff]', '', query)
+    meaningful_chars = re.sub(r"[^a-zA-Z0-9\u3000-\u9fff\u4e00-\u9fff]", "", query)
     if len(meaningful_chars) < 2:
         raise HTTPException(status_code=400, detail="Query must contain meaningful text")
 
+
+@router.post("/verify", response_model=VerifyResponse)
+async def verify_query(payload: VerifyRequest):
+    query = sanitize_query(payload.query)
+    validate_meaningful_query(query)
+    history = sanitize_history(payload.history)
+
     logger.info(f"Verifying: '{query[:60]}'")
-    return await run_verification_pipeline(query)
+    return await run_verification_pipeline(query, history=history)
 
 
 @router.post("/verify/stream")
 async def verify_stream(payload: VerifyRequest):
-    """
-    Server-Sent Events streaming endpoint.
-    Emits pipeline stage events as they complete, then the final result.
-    """
     query = sanitize_query(payload.query)
-
-    if len(query) < 2:
-        raise HTTPException(status_code=400, detail="Query too short")
+    validate_meaningful_query(query)
+    history = sanitize_history(payload.history)
 
     async def event_generator():
         try:
-            yield f"event: start\ndata: {json.dumps({'stage': 'started', 'query': query})}\n\n"
+            resolution = await resolve_query(query, history)
+            resolved_query = resolution.resolved_query
+
+            yield f"event: start\ndata: {json.dumps({'stage': 'started', 'query': query, 'resolved_query': resolved_query, 'used_context': resolution.used_context})}\n\n"
             await asyncio.sleep(0)
 
-            # Stage 1: Cache check
-            cached = get_cached(query)
+            cached = get_cached(resolved_query)
             if cached:
+                cached["resolved_query"] = resolved_query
+                cached["used_context"] = resolution.used_context
+                cached["context_turns_used"] = resolution.context_turns_used
                 yield f"event: cache_hit\ndata: {json.dumps({'from_cache': True})}\n\n"
                 yield f"event: complete\ndata: {json.dumps(cached)}\n\n"
                 return
 
             yield f"event: stage\ndata: {json.dumps({'stage': 'calling_primary_llm'})}\n\n"
 
-            # Run the full pipeline
-            result = await run_verification_pipeline(query)
+            result = await run_verification_pipeline(query, history=history)
             result_dict = result.model_dump()
-
             yield f"event: complete\ndata: {json.dumps(result_dict)}\n\n"
 
         except Exception as e:
@@ -107,11 +98,10 @@ async def verify_stream(payload: VerifyRequest):
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
-        }
+        },
     )
 
 
 @router.get("/cache/stats")
 async def cache_stats():
-    """Debug endpoint — shows Redis connection status and cached entry count."""
     return get_cache_stats()

@@ -197,9 +197,26 @@ Use this for a quick liveness probe.
 
 Use this to inspect external dependency status before a demo or deployment.
 
+## Examples
+
+- Python example: [examples/python/verify_request.py](./examples/python/verify_request.py)
+- cURL example: [examples/curl/verify.sh](./examples/curl/verify.sh)
+
+## Deployment
+
+- Deployment guide: [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+
+## Launch Assets
+
+- Launch kit: [docs/LAUNCH_KIT.md](./docs/LAUNCH_KIT.md)
+- Hackathon pitch pack: [docs/HACKATHON_PITCH.md](./docs/HACKATHON_PITCH.md)
+
 ## Repository Layout
 
 ```text
+.github/
+  ISSUE_TEMPLATE/
+  pull_request_template.md
 backend/
   main.py
   .env.example
@@ -207,10 +224,16 @@ backend/
   routers/
   services/
   tests/
+examples/
+  curl/
+  python/
 frontend/
   src/
   .env.example
 docs/
+  DEPLOYMENT.md
+  HACKATHON_PITCH.md
+  LAUNCH_KIT.md
   ROADMAP.md
 README.md
 CONTRIBUTING.md

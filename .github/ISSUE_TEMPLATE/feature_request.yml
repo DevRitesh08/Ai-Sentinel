@@ -1,0 +1,47 @@
+name: Feature request
+description: Suggest a high-impact product, developer experience, or research improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Great feature requests explain the problem, the user benefit, and how we would know it worked.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Core verification pipeline
+        - Frontend UX
+        - Evaluations and benchmarks
+        - Deployment and operations
+        - Developer experience
+        - Community and growth
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: The current trust score is useful, but it is hard to compare results across multiple answers.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      placeholder: Add a side-by-side compare mode for two responses to the same query.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: We could also expose this as an API-only feature, but the UI would make it more shareable.
+  - type: textarea
+    id: success
+    attributes:
+      label: What would success look like?
+      placeholder: More credible demos, easier benchmark screenshots, and lower friction for product teams evaluating the repo.

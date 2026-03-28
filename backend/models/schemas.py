@@ -10,6 +10,19 @@ class ClaimStatus(str, Enum):
     CONTRADICTED = "CONTRADICTED"
 
 
+class ResponseStatus(str, Enum):
+    OK = "ok"
+    DEGRADED = "degraded"
+    ERROR = "error"
+
+
+class AnswerSource(str, Enum):
+    PRIMARY = "primary"
+    OFFLINE_DEMO = "offline_demo"
+    OLLAMA_FALLBACK = "ollama_fallback"
+    NONE = "none"
+
+
 class ConversationTurn(BaseModel):
     role: Literal["user", "assistant"]
     content: str
@@ -54,3 +67,6 @@ class VerifyResponse(BaseModel):
     resolved_query: Optional[str] = None
     used_context: bool = False
     context_turns_used: int = 0
+    status: ResponseStatus = ResponseStatus.OK
+    degraded_reason: Optional[str] = None
+    answer_source: AnswerSource = AnswerSource.PRIMARY

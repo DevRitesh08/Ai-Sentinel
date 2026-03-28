@@ -27,6 +27,74 @@ export function getTrustConfig(score) {
   };
 }
 
+export function getResponseStatusConfig(data) {
+  const reason = data?.degraded_reason;
+  const source = data?.answer_source;
+  const status = data?.status ?? "ok";
+
+  if (status === "ok" && source === "primary") {
+    return null;
+  }
+
+  if (reason === "quota_exceeded") {
+    return {
+      label: "Provider limit reached",
+      message: source === "offline_demo"
+        ? "Primary provider quota was exhausted, so a matching demo response is being shown instead."
+        : source === "ollama_fallback"
+          ? "Primary provider quota was exhausted, so this answer came from a local fallback model and may have limited verification."
+          : "Primary provider quota was exhausted. Retry in a bit for a live verified answer.",
+      color: "#F0B43C",
+    };
+  }
+
+  if (source === "offline_demo" || reason === "offline_demo") {
+    return {
+      label: "Demo response",
+      message: "This answer came from a precomputed demo response rather than a live provider call.",
+      color: "#4BA8E8",
+    };
+  }
+
+  if (source === "ollama_fallback") {
+    return {
+      label: "Local fallback answer",
+      message: "The primary provider was unavailable, so this answer came from a local fallback model and may have limited verification.",
+      color: "#4BA8E8",
+    };
+  }
+
+  if (reason === "timeout") {
+    return {
+      label: "Provider timed out",
+      message: "The upstream model took too long to respond. Retry for a fully verified answer.",
+      color: "#F0B43C",
+    };
+  }
+
+  if (reason === "malformed_response") {
+    return {
+      label: "Provider response issue",
+      message: "The upstream model returned an unreadable response. The answer below is a degraded fallback.",
+      color: "#F0B43C",
+    };
+  }
+
+  if (status === "error") {
+    return {
+      label: "Provider unavailable",
+      message: "No fallback answer source was available, so the result below is an outage message rather than a verified answer.",
+      color: "#F5505A",
+    };
+  }
+
+  return {
+    label: "Degraded response",
+    message: "This result was generated in a degraded mode. Treat it as lower-confidence than a normal verified answer.",
+    color: "#F0B43C",
+  };
+}
+
 export function getStatusConfig(status) {
   switch (status?.toUpperCase()) {
     case "VERIFIED":

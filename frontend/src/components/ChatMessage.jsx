@@ -3,7 +3,7 @@ import InspectPanel from "./InspectPanel";
 import SentenceText from "./SentenceText";
 import SourceChainDrawer from "./SourceChainDrawer";
 import TrustScoreMeter from "./TrustScoreMeter";
-import { formatLatency, getTrustConfig } from "../utils/trustHelpers";
+import { formatLatency, getResponseStatusConfig, getTrustConfig } from "../utils/trustHelpers";
 
 function isResolvedQueryDifferent(rawQuery, resolvedQuery) {
   if (!rawQuery || !resolvedQuery) return false;
@@ -21,7 +21,9 @@ export default function ChatMessage({ query, data }) {
   const verifiedCount = data.claims?.filter((claim) => claim.status === "VERIFIED").length || 0;
   const totalClaims = data.claims?.length || 0;
   const trustConfig = getTrustConfig(data.trust_score);
+  const statusConfig = getResponseStatusConfig(data);
   const showResolvedQuery = data.used_context && isResolvedQueryDifferent(query, data.resolved_query);
+  const isDegraded = data.status && data.status !== "ok";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(data.answer);
@@ -57,13 +59,24 @@ export default function ChatMessage({ query, data }) {
 
         <div className="card overflow-hidden" style={{ borderColor: "#182030" }}>
           <div className="flex items-center gap-4 px-5 py-4 border-b border-[#182030]" style={{ background: "rgba(8,14,22,0.5)" }}>
-            <TrustScoreMeter score={data.trust_score} size={52} />
+            <div style={{ opacity: isDegraded ? 0.72 : 1 }}>
+              <TrustScoreMeter score={data.trust_score} size={52} />
+            </div>
 
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex items-center flex-wrap gap-1.5">
                 <span className="text-[12px] font-medium" style={{ color: trustConfig.color }}>
                   {trustConfig.label}
                 </span>
+                {isDegraded && (
+                  <span className="badge-uncertain text-[10px]">
+                    {data.status === "error" ? "outage" : "degraded"}
+                  </span>
+                )}
+                {data.answer_source === "offline_demo" && <span className="badge-info text-[10px]">demo</span>}
+                {data.answer_source === "ollama_fallback" && (
+                  <span className="badge-info text-[10px]">local fallback</span>
+                )}
                 {data.verifier_used && (
                   <span className="badge-dual text-[10px]">
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -113,9 +126,24 @@ export default function ChatMessage({ query, data }) {
             </div>
           </div>
 
+          {statusConfig && (
+            <div
+              className="px-5 py-3 border-b border-[#182030]/70"
+              style={{ background: `${statusConfig.color}10` }}
+            >
+              <div className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: statusConfig.color }}>
+                {statusConfig.label}
+              </div>
+              <p className="text-[12.5px] leading-relaxed text-[#AFC4D8]">
+                {statusConfig.message}
+              </p>
+            </div>
+          )}
+
           <div className="px-5 py-5">
             <SentenceText
               sentences={data.sentences}
+              fallbackText={data.answer}
               onInspect={(sentence) => setInspectSentence(sentence)}
             />
           </div>
@@ -127,10 +155,12 @@ export default function ChatMessage({ query, data }) {
                 className="flex items-center gap-2 text-[11.5px] text-[#3D5670] hover:text-[#4BA8E8] transition-colors"
               >
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: trustConfig.color }} />
-                {totalClaims} claim{totalClaims !== 1 ? "s" : ""} verified · view sources
+                {totalClaims} claim{totalClaims !== 1 ? "s" : ""} verified - view sources
               </button>
             ) : (
-              <span />
+              <span className="text-[11px] font-mono text-[#2E4560]">
+                {data.status === "error" ? "no verified sources available" : "plain answer view"}
+              </span>
             )}
 
             <button onClick={handleCopy} className="btn-ghost text-[11px] rounded-lg px-2.5 py-1 gap-1.5">

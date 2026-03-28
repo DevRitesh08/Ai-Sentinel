@@ -1,13 +1,20 @@
 // frontend/src/components/SentenceText.jsx
-import { useState } from "react";
 import { getStatusConfig } from "../utils/trustHelpers";
 
 /**
  * Renders AI answer with inline per-sentence trust badges.
  * Click on a non-neutral sentence to open the source inspect panel.
  */
-export default function SentenceText({ sentences, onInspect }) {
-  if (!sentences?.length) return null;
+export default function SentenceText({ sentences, fallbackText, onInspect }) {
+  if (!sentences?.length) {
+    if (!fallbackText) return null;
+
+    return (
+      <div className="text-[15px] leading-[1.85] text-ats-text whitespace-pre-wrap">
+        {fallbackText}
+      </div>
+    );
+  }
 
   return (
     <div className="text-[15px] leading-[1.85] text-ats-text">

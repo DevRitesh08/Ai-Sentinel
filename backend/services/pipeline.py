@@ -11,7 +11,7 @@ from services.context_resolver import resolve_query
 from services.fact_checker import fact_check_all_claims
 from services.gate import calculate_consistency_score, should_escalate
 from services.intent_checker import check_intent_alignment
-from services.llm_primary import call_primary
+from services.llm_primary import PrimaryLLMError, call_ollama_primary, call_primary
 from services.llm_verifier import call_verifier
 from services.offline_demo import get_offline_response
 from services.sentence_segmenter import annotate_sentences, split_into_sentences
@@ -51,6 +51,112 @@ def _build_error_response(message: str, error: str, latency_ms: int = 0) -> Veri
         resolved_query=None,
         used_context=False,
         context_turns_used=0,
+        status="error",
+        degraded_reason="provider_unavailable",
+        answer_source="none",
+    )
+
+
+def _context_fields(resolution) -> dict:
+    return {
+        "resolved_query": resolution.resolved_query,
+        "used_context": resolution.used_context,
+        "context_turns_used": resolution.context_turns_used,
+    }
+
+
+def _normalize_cached_response(
+    cached: dict,
+    resolution,
+) -> dict:
+    cached["resolved_query"] = resolution.resolved_query
+    cached["used_context"] = resolution.used_context
+    cached["context_turns_used"] = resolution.context_turns_used
+    cached.setdefault("status", "ok")
+    cached.setdefault("degraded_reason", None)
+    cached.setdefault("answer_source", "primary")
+    return cached
+
+
+def _build_degraded_message(failure_type: str) -> str:
+    if failure_type == "quota_exceeded":
+        return "Provider quota reached. Please wait a moment and try again."
+    if failure_type == "timeout":
+        return "The provider timed out. Please try again shortly."
+    if failure_type == "malformed_response":
+        return "The provider returned an unreadable answer. Please try again."
+    return "Service temporarily unavailable. Please try again."
+
+
+async def _build_primary_fallback_response(
+    resolved_query: str,
+    resolution,
+    error: Exception,
+    start_time: float,
+    failure_type: str,
+) -> VerifyResponse:
+    offline = get_offline_response(resolved_query)
+    if offline:
+        logger.warning(
+            f"Primary provider failed ({failure_type}); serving offline demo response for '{resolved_query[:60]}'"
+        )
+        return VerifyResponse(
+            **offline,
+            error=str(error),
+            status="degraded",
+            degraded_reason=failure_type,
+            answer_source="offline_demo",
+            **_context_fields(resolution),
+        )
+
+    try:
+        primary = await call_ollama_primary(resolved_query)
+    except Exception as fallback_error:
+        logger.warning(f"Ollama primary fallback unavailable after {failure_type}: {fallback_error}")
+    else:
+        elapsed_ms = int((time.time() - start_time) * 1000)
+        trust_score = min(45, max(20, int(primary.get("confidence", 35))))
+        sentences = [
+            {"text": sentence, "status": "NEUTRAL"}
+            for sentence in split_into_sentences(primary["answer"])
+        ]
+        logger.warning(
+            f"Primary provider failed ({failure_type}); answered via Ollama fallback for '{resolved_query[:60]}'"
+        )
+        return VerifyResponse(
+            trust_score=trust_score,
+            answer=primary["answer"],
+            confidence=primary.get("confidence", 35),
+            verifier_used=False,
+            claims=[],
+            sentences=sentences,
+            from_cache=False,
+            latency_ms=elapsed_ms,
+            error=str(error),
+            trust_label=score_to_label(trust_score),
+            trust_color=score_to_color(trust_score),
+            status="degraded",
+            degraded_reason=failure_type,
+            answer_source="ollama_fallback",
+            **_context_fields(resolution),
+        )
+
+    return VerifyResponse(
+        trust_score=0,
+        answer=_build_degraded_message(failure_type),
+        confidence=0,
+        verifier_used=False,
+        claims=[],
+        sentences=[],
+        from_cache=False,
+        latency_ms=int((time.time() - start_time) * 1000),
+        error=str(error),
+        trust_label="UNRELIABLE - VERIFY MANUALLY",
+        trust_color="#FF4F6A",
+        status="error",
+        degraded_reason=failure_type,
+        answer_source="none",
+        **_context_fields(resolution),
     )
 
 
@@ -78,6 +184,9 @@ async def run_verification_pipeline(
             resolved_query=None,
             used_context=False,
             context_turns_used=0,
+            status="error",
+            degraded_reason="timeout",
+            answer_source="none",
         )
     except Exception as e:
         logger.error(f"Pipeline error: {e}")
@@ -96,6 +205,9 @@ async def run_verification_pipeline(
             resolved_query=None,
             used_context=False,
             context_turns_used=0,
+            status="error",
+            degraded_reason="provider_unavailable",
+            answer_source="none",
         )
 
 
@@ -115,38 +227,36 @@ async def _run_pipeline(query: str, history: list[ConversationTurn]) -> VerifyRe
         logger.info(f"OFFLINE MODE: returning pre-baked response for '{resolved_query[:40]}'")
         return VerifyResponse(
             **offline,
-            resolved_query=resolved_query,
-            used_context=resolution.used_context,
-            context_turns_used=resolution.context_turns_used,
+            status="degraded",
+            degraded_reason="offline_demo",
+            answer_source="offline_demo",
+            **_context_fields(resolution),
         )
 
     cached = get_cached(resolved_query)
     timer.mark("cache_check")
     if cached:
-        cached["resolved_query"] = resolved_query
-        cached["used_context"] = resolution.used_context
-        cached["context_turns_used"] = resolution.context_turns_used
-        return VerifyResponse(**cached)
+        return VerifyResponse(**_normalize_cached_response(cached, resolution))
 
     try:
         primary = await call_primary(resolved_query)
-    except Exception as e:
-        logger.error(f"Pipeline failed at primary LLM: {e}")
-        return VerifyResponse(
-            trust_score=0,
-            answer="Service temporarily unavailable. Please try again.",
-            confidence=0,
-            verifier_used=False,
-            claims=[],
-            sentences=[],
-            from_cache=False,
-            latency_ms=int((time.time() - start_time) * 1000),
-            error=str(e),
-            trust_label="UNRELIABLE - VERIFY MANUALLY",
-            trust_color="#FF4F6A",
+    except PrimaryLLMError as e:
+        logger.error(f"Pipeline failed at primary LLM: {e} | type={e.failure_type}")
+        return await _build_primary_fallback_response(
             resolved_query=resolved_query,
-            used_context=resolution.used_context,
-            context_turns_used=resolution.context_turns_used,
+            resolution=resolution,
+            error=e,
+            start_time=start_time,
+            failure_type=e.failure_type,
+        )
+    except Exception as e:
+        logger.error(f"Pipeline failed at primary LLM: {e} | type=provider_unavailable")
+        return await _build_primary_fallback_response(
+            resolved_query=resolved_query,
+            resolution=resolution,
+            error=e,
+            start_time=start_time,
+            failure_type="provider_unavailable",
         )
     timer.mark("primary_llm")
 
@@ -216,9 +326,10 @@ async def _run_pipeline(query: str, history: list[ConversationTurn]) -> VerifyRe
         bias_flags=bias.get("flags", []),
         intent_aligned=intent.get("aligned"),
         alignment_score=intent.get("alignment_score"),
-        resolved_query=resolved_query,
-        used_context=resolution.used_context,
-        context_turns_used=resolution.context_turns_used,
+        status="ok",
+        degraded_reason=None,
+        answer_source="primary",
+        **_context_fields(resolution),
     )
 
     set_cached(resolved_query, result.model_dump())
